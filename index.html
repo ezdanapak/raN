@@ -1,16 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Icons on Map</title>
-    <link rel="stylesheet" href="./leaflet/leaflet.css">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moving Icons on Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+    .icon {
+      background-size: contain; 
+      background-repeat: no-repeat;
+      background-position: center; 
+      border-radius: 50%; 
+    }
+    .girl {
+      background-image: url('./image/female.png');
+    }
+    .boy {
+      background-image: url('./image/boy-child-color-icon.png');
+    }
+    .love {
+      background-image: url('./image/gift-present-giving-icon.png'); /* Icon for expressing love */
+    }
+  </style>
 </head>
 <body>
-    <div id="map"></div>
-    <script src="./leaflet/leaflet.js"></script>
-    <script src="./node_modules/lottie-web/build/player/lottie.min.js"></script>
-    <script src="script.js"></script>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([41.544241, 45.008800], 18); // Zoom level 18 for closer view
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    
+
+    const path1 = [
+    [41.544218, 45.008779],
+      [41.544369, 45.00835],
+      [41.544543, 45.007867],
+      [41.544905, 45.006891],
+      [41.545437, 45.005402],
+      [41.54569, 45.004694],
+      [41.545906, 45.004125],
+      [41.54569, 45.004694], // უკან დაბრუნება
+      [41.545437, 45.005402],
+      [41.544905, 45.006891],
+      [41.544543, 45.007867],
+      [41.544369, 45.00835],
+      [41.544218, 45.008779],
+      [41.544087, 45.009146],
+      [41.543935, 45.009565],
+      [41.543766, 45.009956],
+      [41.543594, 45.010423],
+      [41.543473, 45.010831],
+      [41.543694, 45.01096], // რა ლამაზია რუსთავი
+      [41.543903, 45.011099],
+      [41.544168, 45.011287],
+      [41.544312, 45.011378],
+      [41.544445, 45.011045],
+      [41.544638, 45.01045],
+      [41.544766, 45.010042],
+      [41.544878, 45.00971],
+      [41.544995, 45.009436],
+      [41.545059, 45.009297],
+      [41.544746, 45.009114],
+      [41.544404, 45.008889],
+      [41.544224, 45.008787],
+      [41.544262, 45.008618], //Gift
+      [41.544216, 45.008774],
+      [41.544507, 45.008948],
+      [41.544842, 45.009187],
+      [41.545168, 45.009393],
+      [41.545378, 45.009511]
+    ];
+
+
+
+
+    const offsetDistance = 0.00020;
+    const path2 = path1.map(([lat, lng]) => [lat, lng + offsetDistance]);
+
+    const girlIcon = L.divIcon({ className: 'icon girl', iconSize: [50, 50] }); // Set iconSize here
+    const boyIcon = L.divIcon({ className: 'icon boy', iconSize: [50, 50] }); // Set iconSize here
+    //const loveIcon = L.divIcon({ className: 'icon love', iconSize: [512, 512] }); // Set iconSize here
+
+    const girlMarker = L.marker(path1[0], { icon: girlIcon }).addTo(map);
+    const boyMarker = L.marker(path2[0], { icon: boyIcon }).addTo(map);
+
+    let step = 0;
+    function animateIcons() {
+      if (step < path1.length) {
+        // Check for the special point [41.543694, 45.01096]
+        if (path1[step][0] === 41.543694 && path1[step][1] === 45.01096) {
+            // Pause at the special point and display "რა ლამაზია რუსთავი!" from the boy
+            boyMarker.bindPopup('რა ლამაზია რუსთავი!').openPopup(); // Boy says რა ლამაზია რუსთავი
+            setTimeout(() => {
+            boyMarker.closePopup(); // Close the popup after 2 seconds
+            step++; // Move to the next step
+            animateIcons(); // Continue animation
+            }, 2000); // 2-second delay
+            return; // Stop further execution for this step
+        }
+        // Existing code for other special points and movement
+        if (path1[step][0] === 41.544262 && path1[step][1] === 45.008618) {
+          // Pause at the special point
+          boyMarker.bindPopup('მე შენთვის საჩუქარი მაქვს!').openPopup();
+          girlMarker.setIcon(L.divIcon({ className: 'icon love' }));
+          setTimeout(() => {
+            boyMarker.closePopup();
+            girlMarker.setIcon(girlIcon); // Revert the icon
+            step++;
+            animateIcons();
+          }, 2000); // 2-second delay
+          return;
+
+          
+        }
+    
+        
+
+        girlMarker.setLatLng(path1[step]);
+        boyMarker.setLatLng(path2[step]);
+
+        const midpointLat = (path1[step][0] + path2[step][0]) / 2;
+        const midpointLng = (path1[step][1] + path2[step][1]) / 2;
+        map.setView([midpointLat, midpointLng], 18);
+
+        if (step === path1.length - 1) {
+          boyMarker.bindPopup('ნახვამდის ხუჭუჭავ <3').openPopup();
+        }
+
+        step++;
+        setTimeout(animateIcons, 1000);
+      }
+    }
+
+    animateIcons();
+  </script>
 </body>
 </html>
